@@ -8,8 +8,8 @@ API REST desarrollada en **Java 21** y **Spring Boot** para la gestión de inven
 
 Antes de ejecutar el proyecto, asegúrate de contar con lo siguiente:
 
-* **Java JDK 21** configurado en las variables de entorno (`JAVA_HOME`).
-* **MySQL Server 8** instalado y en ejecución.
+* **Java JDK 21** .
+* **MySQL Server 8** .
 * ***Spring Boot 4.1.2**
 ---
 
