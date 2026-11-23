@@ -1,6 +1,6 @@
 # Minimarket Nilda - Backend API REST
 
-API REST desarrollada en **Java 21** y **Spring Boot** para la gestión de inventario, ventas, comprobantes y reportes del establecimiento **Minimarket Nilda**[cite: 1].
+API REST desarrollada en **Java 21** y **Spring Boot** para la gestión de inventario, ventas, comprobantes y reportes del establecimiento **Minimarket Nilda**.
 
 ---
 
@@ -8,8 +8,8 @@ API REST desarrollada en **Java 21** y **Spring Boot** para la gestión de inven
 
 Antes de ejecutar el proyecto, asegúrate de contar con lo siguiente:
 
-* **Java JDK 21** configurado en las variables de entorno (`JAVA_HOME`)[cite: 1].
-* **MySQL Server 8** instalado y en ejecución[cite: 1].
+* **Java JDK 21** configurado en las variables de entorno (`JAVA_HOME`).
+* **MySQL Server 8** instalado y en ejecución.
 * ***Spring Boot 4.1.2**
 ---
 
@@ -59,7 +59,7 @@ spring.jpa.show-sql=true
      chmod +x mvnw
      ./mvnw spring-boot:run
      ```
-3. Espera a que Spring Boot complete el arranque en el puerto `8080` y valide el mapeo JPA contra MySQL sin errores[cite: 1].
+3. Espera a que Spring Boot complete el arranque en el puerto `8080` y valide el mapeo JPA contra MySQL sin errores.
 4. La API quedará disponible en:
    `http://localhost:8080/api`
 
