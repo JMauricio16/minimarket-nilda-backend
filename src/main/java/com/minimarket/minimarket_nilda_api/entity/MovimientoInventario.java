@@ -2,6 +2,8 @@ package com.minimarket.minimarket_nilda_api.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
+
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
@@ -26,7 +28,7 @@ public class MovimientoInventario {
     private TipoMovimiento tipo;
 
     @Column(nullable = false)
-    private Integer cantidad;
+    private BigDecimal cantidad;
 
     @Column(nullable = false)
     private LocalDateTime fecha = LocalDateTime.now();

@@ -2,6 +2,7 @@ package com.minimarket.minimarket_nilda_api.dto;
 
 import jakarta.validation.constraints.*;
 import lombok.Data;
+import java.math.BigDecimal;
 import java.util.List;
 
 @Data
@@ -18,6 +19,6 @@ public class VentaRequestDTO {
 
         @NotNull(message = "La cantidad es obligatoria")
         @Positive(message = "La cantidad debe ser mayor a 0")
-        private Integer cantidad;
+        private BigDecimal cantidad;
     }
 }

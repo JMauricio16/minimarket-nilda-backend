@@ -9,6 +9,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.math.BigDecimal;
+
 @Service
 @RequiredArgsConstructor
 public class InventarioService {
@@ -24,7 +26,8 @@ public class InventarioService {
         Usuario usuario = usuarioRepository.findByUsername(username)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado"));
 
-        prod.setStock(prod.getStock() + dto.getCantidad());
+        BigDecimal stockActual = prod.getStock() != null ? prod.getStock() : BigDecimal.ZERO;
+        prod.setStock(stockActual.add(dto.getCantidad()));
         productoRepository.save(prod);
 
         MovimientoInventario mov = new MovimientoInventario();

@@ -20,29 +20,59 @@ public class ReporteService {
 
     private final VentaRepository ventaRepository;
     private final ProductoRepository productoRepository;
+    private final MovimientoInventarioRepository movimientoInventarioRepository;
 
-    public Map<String, Object> obtenerResumenDashboard(String username, boolean esAdmin) {
-        LocalDateTime inicioHoy = LocalDate.now().atStartOfDay();
-        LocalDateTime finHoy = LocalDate.now().atTime(LocalTime.MAX);
+   public Map<String, Object> obtenerResumenDashboard(String username, boolean esAdmin) {
+    LocalDate hoy = LocalDate.now();
+    LocalDateTime inicioHoy = hoy.atStartOfDay();
+    LocalDateTime finHoy = hoy.atTime(LocalTime.MAX);
 
-        List<Venta> ventasHoyList = ventaRepository.findByFechaBetweenOrderByFechaDesc(inicioHoy, finHoy);
-        if (!esAdmin) {
-            ventasHoyList = ventasHoyList.stream()
-                    .filter(v -> v.getUsuario().getUsername().equals(username))
-                    .toList();
-        }
+    List<Venta> ventasHoyList = ventaRepository.findByFechaBetweenOrderByFechaDesc(inicioHoy, finHoy);
+    if (!esAdmin) {
+        ventasHoyList = ventasHoyList.stream()
+                .filter(v -> v.getUsuario().getUsername().equals(username))
+                .toList();
+    }
 
-        BigDecimal totalHoy = ventasHoyList.stream()
+    BigDecimal totalHoy = ventasHoyList.stream()
+            .map(Venta::getTotal)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+    LocalDate inicioSemana = hoy.minusDays(6);
+    List<Venta> ventasSemanaList = ventaRepository.findByFechaBetweenOrderByFechaDesc(
+            inicioSemana.atStartOfDay(), finHoy);
+    if (!esAdmin) {
+        ventasSemanaList = ventasSemanaList.stream()
+                .filter(v -> v.getUsuario().getUsername().equals(username))
+                .toList();
+    }
+
+    java.time.format.DateTimeFormatter fmt = java.time.format.DateTimeFormatter.ofPattern("dd/MM");
+    List<Map<String, Object>> ventasSemana = new ArrayList<>();
+    for (int i = 0; i < 7; i++) {
+        LocalDate dia = inicioSemana.plusDays(i);
+        BigDecimal totalDia = ventasSemanaList.stream()
+                .filter(v -> v.getFecha().toLocalDate().equals(dia))
                 .map(Venta::getTotal)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        return Map.of(
-                "ventasHoy", totalHoy,
-                "totalProductos", productoRepository.count(),
-                "stockCritico", productoRepository.findStockCritico().size(),
-                "productosCriticos", productoRepository.findStockCritico()
-        );
+        ventasSemana.add(Map.of(
+                "dia", dia.format(fmt),
+                "fecha", dia.toString(),
+                "total", totalDia
+        ));
     }
+
+    List<Producto> criticos = productoRepository.findStockCritico();
+
+    return Map.of(
+            "ventasHoy", totalHoy,
+            "totalProductos", productoRepository.count(),
+            "stockCritico", criticos.size(),
+            "productosCriticos", criticos,
+            "ventasSemana", ventasSemana
+    );
+}
 
     public List<Venta> listarVentasPorRango(LocalDate desde, LocalDate hasta) {
         if (hasta.isBefore(desde)) {
@@ -51,68 +81,5 @@ public class ReporteService {
         return ventaRepository.findByFechaBetweenOrderByFechaDesc(desde.atStartOfDay(), hasta.atTime(LocalTime.MAX));
     }
 
-    public byte[] generarComprobantePdf(Long idVenta) {
-        Venta venta = ventaRepository.findById(idVenta)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Venta no encontrada"));
-
-        try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-            Document doc = new Document(PageSize.A5);
-            PdfWriter.getInstance(doc, out);
-            doc.open();
-            doc.add(new Paragraph("MINIMARKET NILDA", FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14)));
-            doc.add(new Paragraph("Comprobante: " + venta.getNroComprobante()));
-            doc.add(new Paragraph("Fecha: " + venta.getFecha()));
-            doc.add(new Paragraph("Cliente: " + venta.getCliente()));
-            doc.add(new Paragraph(" "));
-
-            PdfPTable tabla = new PdfPTable(4);
-            tabla.addCell("Producto");
-            tabla.addCell("Cant.");
-            tabla.addCell("P. Unit");
-            tabla.addCell("Subtotal");
-            for (DetalleVenta d : venta.getDetalles()) {
-                tabla.addCell(d.getProducto().getNombre());
-                tabla.addCell(String.valueOf(d.getCantidad()));
-                tabla.addCell("S/ " + d.getPrecioUnitario());
-                tabla.addCell("S/ " + d.getSubtotal());
-            }
-            doc.add(tabla);
-            doc.add(new Paragraph("\nTOTAL A PAGAR: S/ " + venta.getTotal(), FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12)));
-            doc.close();
-            return out.toByteArray();
-        } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error generando comprobante PDF");
-        }
-    }
-
-    public byte[] generarReporteVentasPdf(LocalDate desde, LocalDate hasta) {
-        List<Venta> ventas = listarVentasPorRango(desde, hasta);
-        try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-            Document doc = new Document(PageSize.A4);
-            PdfWriter.getInstance(doc, out);
-            doc.open();
-            doc.add(new Paragraph("REPORTE DE VENTAS - MINIMARKET NILDA", FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14)));
-            doc.add(new Paragraph("Periodo: " + desde + " al " + hasta + "\n\n"));
-
-            PdfPTable tabla = new PdfPTable(4);
-            tabla.addCell("Fecha");
-            tabla.addCell("Comprobante");
-            tabla.addCell("Cliente");
-            tabla.addCell("Total");
-            BigDecimal suma = BigDecimal.ZERO;
-            for (Venta v : ventas) {
-                tabla.addCell(v.getFecha().toLocalDate().toString());
-                tabla.addCell(v.getNroComprobante());
-                tabla.addCell(v.getCliente());
-                tabla.addCell("S/ " + v.getTotal());
-                suma = suma.add(v.getTotal());
-            }
-            doc.add(tabla);
-            doc.add(new Paragraph("\nTOTAL PERIODO: S/ " + suma, FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12)));
-            doc.close();
-            return out.toByteArray();
-        } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error generando reporte PDF");
-        }
-    }
+   
 }

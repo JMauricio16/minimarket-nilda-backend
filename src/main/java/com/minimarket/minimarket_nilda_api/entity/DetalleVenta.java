@@ -24,7 +24,7 @@ public class DetalleVenta {
     private Producto producto;
 
     @Column(nullable = false)
-    private Integer cantidad;
+    private BigDecimal cantidad;
 
     @Column(name = "precio_unitario", nullable = false, precision = 10, scale = 2)
     private BigDecimal precioUnitario;

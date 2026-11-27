@@ -8,7 +8,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 
 @Service
@@ -38,23 +40,28 @@ public class VentaService {
             Producto prod = productoRepository.findById(item.getIdProducto())
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Producto no encontrado"));
 
-            if (prod.getStock() < item.getCantidad()) {
+            BigDecimal stockActual = prod.getStock() != null ? prod.getStock() : BigDecimal.ZERO;
+            if (stockActual.compareTo(item.getCantidad()) < 0) {
                 throw new ResponseStatusException(HttpStatus.CONFLICT,
-                        "Stock insuficiente para " + prod.getNombre() + " (disponible: " + prod.getStock() + ")");
+                        "Stock insuficiente para " + prod.getNombre() + " (disponible: " + stockActual + ")");
             }
 
-            prod.setStock(prod.getStock() - item.getCantidad());
+            prod.setStock(stockActual.subtract(item.getCantidad()));
             productoRepository.save(prod);
+
+            BigDecimal subtotal = prod.getPrecioVenta()
+                    .multiply(item.getCantidad())
+                    .setScale(2, RoundingMode.HALF_UP);
 
             DetalleVenta det = new DetalleVenta();
             det.setVenta(venta);
             det.setProducto(prod);
             det.setCantidad(item.getCantidad());
             det.setPrecioUnitario(prod.getPrecioVenta());
-            det.setSubtotal(prod.getPrecioVenta().multiply(BigDecimal.valueOf(item.getCantidad())));
+            det.setSubtotal(subtotal);
             venta.getDetalles().add(det);
 
-            total = total.add(det.getSubtotal());
+            total = total.add(subtotal);
 
             MovimientoInventario mov = new MovimientoInventario();
             mov.setProducto(prod);

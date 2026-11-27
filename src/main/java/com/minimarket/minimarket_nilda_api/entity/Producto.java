@@ -9,12 +9,12 @@ import java.math.BigDecimal;
 @Table(name = "producto")
 @Data
 public class Producto {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_producto")
     private Long idProducto;
 
-    @NotBlank(message = "El código es obligatorio")
     @Column(nullable = false, unique = true, length = 20)
     private String codigo;
 
@@ -37,15 +37,19 @@ public class Producto {
     private BigDecimal precioVenta;
 
     @NotNull
-    @Min(value = 0, message = "El stock no puede ser negativo")
-    @Column(nullable = false)
-    private Integer stock;
+    @PositiveOrZero(message = "El stock no puede ser negativo")
+    @Column(nullable = false, precision = 10, scale = 3)
+    private BigDecimal stock = BigDecimal.ZERO;
 
     @NotNull
-    @Min(value = 0)
-    @Column(name = "stock_minimo", nullable = false)
-    private Integer stockMinimo = 5;
+    @PositiveOrZero(message = "El stock mínimo no puede ser negativo")
+    @Column(name = "stock_minimo", nullable = false, precision = 10, scale = 3)
+    private BigDecimal stockMinimo = BigDecimal.valueOf(5);
 
     @Column(nullable = false)
     private Boolean activo = true;
+
+    @ManyToOne
+    @JoinColumn(name = "id_unidad", nullable = false)
+    private UnidadMedida unidadMedida;
 }
