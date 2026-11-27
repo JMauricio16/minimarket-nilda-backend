@@ -95,7 +95,7 @@ INSERT INTO unidad_medida (abreviatura, nombre) VALUES
 ('ml', 'Mililitro'),
 ('cja', 'Caja');
 
-
+##la contraseña es password
 INSERT INTO usuario (nombre, username, password_hash, rol, activo) VALUES
 ('Administrador Nilda', 'admin', '$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BG', 'ADMIN', TRUE),
 ('Vendedor Turno 1', 'vendedor', '$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BG', 'VENDEDOR', TRUE);
